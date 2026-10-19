@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meow Money - Quản lý chi tiêu</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Bottom Nav -->
+        <nav class="navigation">
+            <div class="logo-box">
+                <span class="logo-icon">🐱</span>
+                <h2 class="logo-text">MEOW MONEY</h2>
+            </div>
+            <ul id="nav-links">
+                <li class="active" data-tab="dashboard" onclick="switchTab('dashboard')">
+                    <a href="javascript:void(0)">📊 <span>Tổng quan</span></a>
+                </li>
+                <li data-tab="wallet" onclick="switchTab('wallet')">
+                    <a href="javascript:void(0)">💳 <span>Ví & Nợ</span></a>
+                </li>
+                <li data-tab="expense" onclick="switchTab('expense')">
+                    <a href="javascript:void(0)">💸 <span>Chi tiêu</span></a>
+                </li>
+                <li data-tab="goals" onclick="switchTab('goals')">
+                    <a href="javascript:void(0)">🎯 <span>Mục tiêu</span></a>
+                </li>
+                <li data-tab="income" onclick="switchTab('income')">
+                    <a href="javascript:void(0)">💰 <span>Thu nhập</span></a>
+                </li>
+                <li data-tab="budget" onclick="switchTab('budget')">
+                    <a href="javascript:void(0)">🚨 <span>Ngân sách</span></a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header chung -->
+            <header class="header">
+                <div>
+                    <p class="app-tag">MEOW MONEY</p>
+                    <h1 class="greeting">Xin chào, bạn ơi! ฅ^•ﻌ•^ฅ</h1>
+                    <p class="subtitle" id="header-period-label">Đang xem: Tháng 10/2026</p>
+                </div>
+                <div class="header-actions">
+                    <button type="button" class="btn-add-top" onclick="openModalWithType('expense')">+ Thêm giao dịch</button>
+                    <div class="avatar" title="Linh vật mèo nhỏ">🐱</div>
+                </div>
+            </header>
+
+            <!-- THANH ĐIỀU KHIỂN THỜI GIAN TOÀN CỤC -->
+            <div class="card time-filter-card">
+                <div class="time-filter-top">
+                    <div class="period-tabs">
+                        <button type="button" class="period-btn" data-mode="day" onclick="setPeriodMode('day')">Theo Ngày</button>
+                        <button type="button" class="period-btn" data-mode="week" onclick="setPeriodMode('week')">Theo Tuần</button>
+                        <button type="button" class="period-btn active" data-mode="month" onclick="setPeriodMode('month')">Theo Tháng</button>
+                        <button type="button" class="period-btn" data-mode="all" onclick="setPeriodMode('all')">Tất cả</button>
+                    </div>
+
+                    <div class="period-pickers">
+                        <input type="date" id="picker-day" class="chart-select picker-input" value="2026-10-19" style="display: none;" onchange="renderApp()">
+                        <select id="picker-week" class="chart-select picker-input" style="display: none;" onchange="renderApp()">
+                            <option value="2026-10-W1">Tuần 1 (01/10 - 07/10)</option>
+                            <option value="2026-10-W2">Tuần 2 (08/10 - 14/10)</option>
+                            <option value="2026-10-W3" selected>Tuần 3 (15/10 - 21/10) - Hiện tại</option>
+                            <option value="2026-10-W4">Tuần 4 (22/10 - 31/10)</option>
+                        </select>
+                        <input type="month" id="picker-month" class="chart-select picker-input" value="2026-10" onchange="renderApp()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 1: DASHBOARD ================= -->
+            <section id="tab-dashboard" class="tab-pane active">
+                <div class="overview-cards">
+                    <div class="card balance-card">
+                        <div class="budget-header">
+                            <p class="card-title">Tổng tiền hiện có trong người</p>
+                            <button type="button" class="btn-text" onclick="switchTab('wallet')">Chi tiết ví →</button>
+                        </div>
+                        <h2 class="amount main-amount" id="dash-balance">0 ₫</h2>
+                        <p class="trend">
+                            🏦 Tài khoản: <strong id="dash-bank-mini">0 ₫</strong> &nbsp;|&nbsp; 
+                            💵 Tiền mặt: <strong id="dash-cash-mini">0 ₫</strong>
+                        </p>
+
+                        <div class="balance-sub-cards">
+                            <div class="sub-card" onclick="switchTab('income')">
+                                <p class="card-title" id="dash-income-label">Thu nhập</p>
+                                <h3 class="amount income-text" id="dash-income">0 ₫</h3>
+                            </div>
+                            <div class="sub-card" onclick="switchTab('expense')">
+                                <p class="card-title" id="dash-expense-label">Chi tiêu</p>
+                                <h3 class="amount expense-text" id="dash-expense">0 ₫</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="three-col-grid">
+                        <div class="card mini-stat-card" onclick="quickViewPeriod('day')">
+                            <p class="card-title">📅 Hôm nay (19/10)</p>
+                            <h3 class="amount expense-text" id="stat-today-expense">0 ₫</h3>
+                            <p class="sub-text" id="stat-today-count">0 giao dịch</p>
+                        </div>
+                        <div class="card mini-stat-card" onclick="quickViewPeriod('week')">
+                            <p class="card-title">📆 Tuần này (15-21/10)</p>
+                            <h3 class="amount expense-text" id="stat-week-expense">0 ₫</h3>
+                            <p class="sub-text" id="stat-week-count">0 giao dịch</p>
+                        </div>
+                        <div class="card mini-stat-card" onclick="quickViewPeriod('month')">
+                            <p class="card-title">🗓️ Tháng 10/2026</p>
+                            <h3 class="amount expense-text" id="stat-month-expense">0 ₫</h3>
+                            <p class="sub-text" id="stat-month-count">0 giao dịch</p>
+                        </div>
+                    </div>
+
+                    <div class="card-group">
+                        <div class="card clickable-card" onclick="switchTab('goals')">
+                            <div class="card-icon">🐷</div>
+                            <p class="card-title">Tiền tiết kiệm tích lũy</p>
+                            <h3 class="amount" id="dash-saving">0 ₫</h3>
+                            <p class="sub-text success-text" id="dash-saving-percent">Đã đạt 0% mục tiêu</p>
+                        </div>
+                        <div class="card clickable-card" onclick="switchTab('goals')">
+                            <div class="card-icon">🎯</div>
+                            <p class="card-title">Mục tiêu tiết kiệm</p>
+                            <h3 class="amount" id="dash-goal">10.000.000 ₫</h3>
+                            <p class="sub-text" id="dash-goal-remain">Cần thêm 10 triệu</p>
+                        </div>
+                    </div>
+
+                    <div class="card clickable-card" onclick="switchTab('budget')">
+                        <div class="budget-header">
+                            <p class="card-title"><strong>Ngân sách chi tiêu tuần</strong></p>
+                            <p class="sub-text">Tuần hiện tại</p>
+                        </div>
+                        <div class="budget-amount-row">
+                            <h3 class="amount" id="dash-week-spent">0 ₫</h3>
+                            <span class="limit" id="dash-week-limit">/ 1.500.000 ₫</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="dash-week-progress" style="width: 0%;"></div>
+                        </div>
+                        <p class="sub-text mt-2" id="dash-week-status">Đang tính toán...</p>
+                    </div>
+
+                    <div class="card reminder-card">
+                        <div class="reminder-content">
+                            <div class="cat-icon" id="cat-mascot">😺</div>
+                            <div>
+                                <strong id="cat-title">Mèo nhỏ nhắc bạn!</strong>
+                                <p id="cat-message">Hãy tiếp tục giữ ngân sách nhé. Bạn đang tiến gần hơn đến mục tiêu tiết kiệm của mình.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="card chart-card">
+                        <div class="chart-header">
+                            <p class="card-title"><strong id="pie-chart-title">Cơ cấu theo kỳ đang chọn</strong></p>
+                            <select id="pie-filter" class="chart-select" onchange="updateCharts()">
+                                <option value="expense">Danh mục chi tiêu</option>
+                                <option value="income">Nguồn thu nhập</option>
+                            </select>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card chart-card">
+                        <div class="chart-header">
+                            <p class="card-title"><strong id="line-chart-title">Biến động dòng tiền</strong></p>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-header">
+                        <h3>Giao dịch trong kỳ đang chọn</h3>
+                        <button type="button" class="btn-text" onclick="switchTab('expense')">Chi tiết theo Ngày/Tuần/Tháng →</button>
+                    </div>
+                    <div id="recent-transactions-list" class="transaction-list mt-2"></div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: VÍ & CÔNG NỢ ================= -->
+            <section id="tab-wallet" class="tab-pane">
+                <div class="card balance-card">
+                    <div class="budget-header">
+                        <div>
+                            <p class="card-title">Tổng số tiền hiện có trong người</p>
+                            <h2 class="amount main-amount" id="wallet-total-now">0 ₫</h2>
+                        </div>
+                        <button type="button" class="btn-outline-pink" onclick="openEditWalletModal()">✏️ Chỉnh số dư gốc</button>
+                    </div>
+                    <p class="sub-text">Số dư sau khi trừ toàn bộ nợ cần trả: <strong id="wallet-after-debt">0 ₫</strong></p>
+
+                    <div class="balance-sub-cards">
+                        <div class="sub-card">
+                            <div class="card-icon">🏦</div>
+                            <p class="card-title">Trong Tài khoản (ATM/Ví ĐT)</p>
+                            <h3 class="amount income-text" id="wallet-bank-amount">0 ₫</h3>
+                            <p class="sub-text" id="wallet-bank-base">Số dư đầu kỳ: 0 ₫</p>
+                        </div>
+                        <div class="sub-card">
+                            <div class="card-icon">💵</div>
+                            <p class="card-title">Tiền mặt trong ví</p>
+                            <h3 class="amount" style="color: #D97706;" id="wallet-cash-amount">0 ₫</h3>
+                            <p class="sub-text" id="wallet-cash-base">Số dư đầu kỳ: 0 ₫</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wallet-grid">
+                    <div class="card">
+                        <div class="section-header">
+                            <div>
+                                <h3>🌱 Thu nhập trong tương lai</h3>
+                                <p class="sub-text">Dự kiến nhận: <strong class="income-text" id="future-income-total">0 ₫</strong></p>
+                            </div>
+                            <button type="button" class="btn-primary" onclick="openPlanModal('future_income')">+ Thêm khoản thu</button>
+                        </div>
+                        <div id="future-income-list" class="transaction-list mt-2"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="section-header">
+                            <div>
+                                <h3>💳 Khoản cần trả nợ</h3>
+                                <p class="sub-text">Còn phải trả: <strong class="expense-text" id="debt-total">0 ₫</strong></p>
+                            </div>
+                            <button type="button" class="btn-primary" style="background: var(--danger);" onclick="openPlanModal('debt')">+ Thêm khoản nợ</button>
+                        </div>
+                        <div id="debt-list" class="transaction-list mt-2"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: MỤC TIÊU TIẾT KIỆM (NÂNG CẤP THEO NGÀY/TUẦN/THÁNG) ================= -->
+            <section id="tab-goals" class="tab-pane">
+                <div class="card summary-banner">
+                    <div>
+                        <p class="sub-text">Quỹ tiết kiệm tích lũy thực tế</p>
+                        <h2 class="amount" id="tab-saving-total">0 ₫</h2>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="openModalWithType('saving')">+ Gửi tiết kiệm</button>
+                </div>
+
+                <!-- Thẻ Cài đặt & Hiển thị Mục tiêu theo Ngày / Tuần / Tháng -->
+                <div class="card">
+                    <div class="budget-header">
+                        <div>
+                            <h3>🎯 Cài đặt & Theo dõi Mục tiêu Tiết kiệm</h3>
+                            <p class="sub-text">Bạn có thể đặt mục tiêu theo Ngày, theo Tuần hoặc theo Tháng</p>
+                        </div>
+                        <button type="button" class="btn-outline-pink" onclick="openGoalSettingsModal()">⚙️ Sửa hạn mức mục tiêu</button>
+                    </div>
+
+                    <!-- Tabs chọn xem mục tiêu theo Ngày / Tuần / Tháng -->
+                    <div class="period-tabs mt-2" style="display: inline-flex;">
+                        <button type="button" class="period-btn goal-view-btn active" data-goalview="month" onclick="switchGoalView('month')">Mục tiêu Tháng</button>
+                        <button type="button" class="period-btn goal-view-btn" data-goalview="week" onclick="switchGoalView('week')">Mục tiêu Tuần</button>
+                        <button type="button" class="period-btn goal-view-btn" data-goalview="day" onclick="switchGoalView('day')">Mục tiêu Ngày</button>
+                    </div>
+
+                    <div class="goal-display-box mt-2">
+                        <div class="budget-item-top">
+                            <span id="goal-view-title">Mục tiêu Tháng 10/2026: Mua điện thoại & Quỹ dự phòng</span>
+                            <span id="goal-view-target" style="font-weight: 800; color: var(--primary-pink);">10.000.000 ₫</span>
+                        </div>
+                        <div class="progress-bar-container" style="height: 16px; margin: 12px 0;">
+                            <div class="progress-bar" id="goal-progress-bar" style="width: 50%; background-color: var(--primary-pink);"></div>
+                        </div>
+                        <div class="budget-header">
+                            <p id="goal-detail-text" class="sub-text">Đã tiết kiệm 5.000.000 ₫ / 10.000.000 ₫ (50%)</p>
+                            <p id="goal-suggestion-text" class="sub-text" style="font-weight: 700; color: var(--success);">Bạn đang tiến độ rất tốt! 🌟</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Lịch sử nạp tiền tiết kiệm</h3>
+                    <div id="saving-transactions-list" class="transaction-list mt-2"></div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: CHI TIẾT CHI TIÊU ================= -->
+            <section id="tab-expense" class="tab-pane">
+                <div class="card summary-banner">
+                    <div>
+                        <p class="sub-text" id="expense-banner-label">Tổng chi tiêu (Kỳ đang chọn)</p>
+                        <h2 class="amount expense-text" id="tab-expense-total">0 ₫</h2>
+                        <p class="sub-text" id="expense-avg-daily">Trung bình: 0 ₫ / ngày</p>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="openModalWithType('expense')">+ Thêm chi tiêu</button>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Bóc tách chi tiêu theo từng Tuần trong tháng</h3>
+                    <div id="weekly-breakdown-grid" class="four-week-grid mt-2"></div>
+                </div>
+
+                <div class="card">
+                    <div class="filter-bar">
+                        <h3>Chi tiết các khoản chi</h3>
+                        <div class="filter-controls">
+                            <select id="expense-group-mode" class="chart-select" onchange="renderTransactionLists()">
+                                <option value="day">📌 Gom theo từng Ngày</option>
+                                <option value="week">📆 Gom theo từng Tuần</option>
+                                <option value="month">🗓️ Gom theo từng Tháng</option>
+                            </select>
+                            <select id="expense-category-filter" class="chart-select" onchange="renderTransactionLists()">
+                                <option value="all">Tất cả danh mục</option>
+                                <option value="Ăn uống">🍔 Ăn uống</option>
+                                <option value="Đi lại">🛵 Đi lại</option>
+                                <option value="Mua sắm">🛍️ Mua sắm</option>
+                                <option value="Học tập">📚 Học tập</option>
+                                <option value="Chi phí cố định">🏠 Chi phí cố định</option>
+                                <option value="Trả nợ">💳 Trả nợ</option>
+                                <option value="Khác">✨ Khác</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="expense-transactions-list" class="transaction-list mt-2"></div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: THU NHẬP ================= -->
+            <section id="tab-income" class="tab-pane">
+                <div class="card summary-banner">
+                    <div>
+                        <p class="sub-text" id="income-banner-label">Tổng thu nhập (Kỳ đang chọn)</p>
+                        <h2 class="amount income-text" id="tab-income-total">0 ₫</h2>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="openModalWithType('income')">+ Thêm thu nhập</button>
+                </div>
+                <div class="card">
+                    <h3>Lịch sử thu nhập (Gom theo ngày)</h3>
+                    <div id="income-transactions-list" class="transaction-list mt-2"></div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: NGÂN SÁCH ================= -->
+            <section id="tab-budget" class="tab-pane">
+                <div class="card">
+                    <div class="budget-header">
+                        <div>
+                            <h3>Ngân sách tháng theo danh mục</h3>
+                            <p class="sub-text">Tự động tô đỏ khi chi tiêu chạm hoặc vượt hạn mức</p>
+                        </div>
+                        <span class="badge-danger" id="over-budget-badge" style="display: none;">Vượt ngân sách</span>
+                    </div>
+                    <div id="category-budgets-list" class="budget-list mt-2"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Nút dấu + ở góc dưới màn hình -->
+        <button type="button" class="fab-add" onclick="openModalWithType('expense')" title="Thêm giao dịch">+</button>
+    </div>
+
+    <!-- ================= MODAL 1: THÊM / SỬA GIAO DỊCH ================= -->
+    <div class="modal-overlay" id="transaction-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Thêm giao dịch</h3>
+                <button type="button" class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+
+            <div class="type-selector">
+                <button type="button" class="type-btn" data-type="income" onclick="setModalType('income')">Thu nhập</button>
+                <button type="button" class="type-btn active" data-type="expense" onclick="setModalType('expense')">Chi tiêu</button>
+                <button type="button" class="type-btn" data-type="saving" onclick="setModalType('saving')">Tiết kiệm</button>
+            </div>
+
+            <form id="transaction-form" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="tx-id">
+                <input type="hidden" id="tx-type" value="expense">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="tx-amount">Số tiền (VNĐ)</label>
+                        <input type="number" id="tx-amount" placeholder="Ví dụ: 150000" required min="1000" step="500">
+                    </div>
+                    <div class="form-group">
+                        <label for="tx-wallet">Nguồn tiền (Ví)</label>
+                        <select id="tx-wallet" required>
+                            <option value="bank">🏦 Tài khoản</option>
+                            <option value="cash">💵 Tiền mặt</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tx-category">Danh mục</label>
+                    <select id="tx-category" required></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="tx-date">Ngày giao dịch</label>
+                    <input type="date" id="tx-date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="tx-note">Ghi chú</label>
+                    <textarea id="tx-note" rows="2" placeholder="Ví dụ: Ăn trưa, Tiền lương, Mua sách..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">Lưu giao dịch 🐾</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: CHỈNH SỐ DƯ GỐC ================= -->
+    <div class="modal-overlay" id="wallet-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Chỉnh sửa số dư gốc ban đầu</h3>
+                <button type="button" class="btn-close" onclick="closeWalletModal()">&times;</button>
+            </div>
+            <form onsubmit="handleWalletSubmit(event)">
+                <div class="form-group">
+                    <label for="base-bank-input">🏦 Số dư gốc Tài khoản (VNĐ)</label>
+                    <input type="number" id="base-bank-input" required min="0" step="1000">
+                </div>
+                <div class="form-group">
+                    <label for="base-cash-input">💵 Số dư gốc Tiền mặt (VNĐ)</label>
+                    <input type="number" id="base-cash-input" required min="0" step="1000">
+                </div>
+                <button type="submit" class="btn-submit">Cập nhật số dư 🐾</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: THÊM THU NHẬP TƯƠNG LAI / NỢ ================= -->
+    <div class="modal-overlay" id="plan-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="plan-modal-title">Thêm khoản dự kiến</h3>
+                <button type="button" class="btn-close" onclick="closePlanModal()">&times;</button>
+            </div>
+            <form id="plan-form" onsubmit="handlePlanSubmit(event)">
+                <input type="hidden" id="plan-type" value="future_income">
+                <div class="form-group">
+                    <label for="plan-title" id="plan-title-label">Tên khoản thu / Chủ nợ</label>
+                    <input type="text" id="plan-title" placeholder="Ví dụ: Lương part-time..." required>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="plan-amount">Số tiền (VNĐ)</label>
+                        <input type="number" id="plan-amount" placeholder="500000" required min="1000" step="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="plan-wallet">Ví nhận / Ví trả</label>
+                        <select id="plan-wallet" required>
+                            <option value="bank">🏦 Tài khoản</option>
+                            <option value="cash">💵 Tiền mặt</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="plan-date">Ngày dự kiến / Hạn chót</label>
+                    <input type="date" id="plan-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="plan-note">Ghi chú</label>
+                    <textarea id="plan-note" rows="2" placeholder="Ghi chú..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Lưu thông tin 🐾</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 4: CÀI ĐẶT MỤC TIÊU TIẾT KIỆM ================= -->
+    <div class="modal-overlay" id="goal-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎯 Cài đặt Hạn mức Mục tiêu Tiết kiệm</h3>
+                <button type="button" class="btn-close" onclick="closeGoalSettingsModal()">&times;</button>
+            </div>
+            <form onsubmit="handleGoalSubmit(event)">
+                <div class="form-group">
+                    <label for="goal-title-input">Tên mục tiêu / Quỹ</label>
+                    <input type="text" id="goal-title-input" value="Mua điện thoại & Quỹ dự phòng" required>
+                </div>
+                <div class="form-group">
+                    <label for="goal-type-select">Loại chu kỳ mục tiêu</label>
+                    <select id="goal-type-select" onchange="toggleGoalInputs(this.value)">
+                        <option value="month">Theo Tháng (Mặc định)</option>
+                        <option value="week">Theo Tuần</option>
+                        <option value="day">Theo Ngày</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="goal-amount-input">Số tiền cần đạt (VNĐ)</label>
+                    <input type="number" id="goal-amount-input" required min="10000" step="50000" placeholder="10000000">
+                </div>
+                <button type="submit" class="btn-submit">Lưu mục tiêu 🐾</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
